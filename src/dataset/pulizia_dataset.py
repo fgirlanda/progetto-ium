@@ -13,10 +13,10 @@ def main():
     
     print(len(dataframes))
 
-
+# scarta soggetti che non presentano uno dei segnali richiesti in nessun istante di tempo
 def check_missing_signals(df):
     signals_cols = ["Palm.EDA", "Heart.Rate", "Breathing.Rate", "Perinasal.Perspiration"]
-    if df[signals_cols].isnull().all().any():
+    if df[signals_cols].isnull().all().any(): 
         return True
     else:
         return False

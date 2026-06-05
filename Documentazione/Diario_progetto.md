@@ -39,3 +39,6 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 
 - installato python 3.12.0
 - creato ambiente virtuale + requirements
+- setup pulizia dataset
+  - ignorate colonne irrilevanti
+  - ignorati soggetti con segnali mancanti
