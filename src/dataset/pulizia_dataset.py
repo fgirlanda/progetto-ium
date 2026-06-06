@@ -17,41 +17,55 @@ def main():
         5: "CD",
         6: "ED",
         7: "MD"
+        # 8: "?"
     }
+    
+    # variabili debug
+    num_soggetti_originali = 0
+    num_soggetti_no_missing = 0
     
     with os.scandir(origin) as files:
         for file in files:
             df = extract_cols(file)
+            num_soggetti_originali += 1
             generate_csv(df, output_dir + "\\without_car_data", Path(file.name).stem+"no_car") # csv senza colonne irrilevanti
             if not check_missing_signals(df):
                 dataframes.append((Path(file.name).stem, df))
+    
+    num_soggetti_no_missing = len(dataframes)
     
     for name, dataframe in dataframes:
         generate_csv(dataframe, output_dir + "\\deleted_missing", name+"data_exists") # csv senza soggetti con segnali mancanti
     
     for name, dataframe in dataframes:
         misurazioni = extract_measures(dataframe)
-        for i, mis in enumerate(misurazioni):
+        for _, mis in enumerate(misurazioni):
             drive = mis["Drive"].iloc[0]
             drive = math.floor(drive)
             if drive in [2, 3, 4, 5, 6, 7]:
+                
                 generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
                 if not (out_of_range(mis)):
                     generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
-
+    
+                
 # NON legge colonne non relative a segnali di interesse
 def extract_cols(file):
     cols = ["Time", "Drive", "Stimulus", "Failure", "Palm.EDA", "Heart.Rate", "Breathing.Rate", "Perinasal.Perspiration"]
     return pd.read_csv(file, usecols=cols)
 
+
 # scarta soggetti che non presentano uno dei segnali richiesti in nessun istante di tempo
 def check_missing_signals(df):
     signals_cols = ["Palm.EDA", "Heart.Rate", "Breathing.Rate", "Perinasal.Perspiration"]
-    if df[signals_cols].isnull().all().any(): 
+    if df[(df["Drive"] > 1) & (df["Drive"] < 8)][signals_cols].isnull().any().any(): 
         return True
     else:
         return False
     
+
+
+
 # estrae singole misurazioni per ogni soggetto
 def extract_measures(df):
     misurazioni = []
@@ -142,8 +156,11 @@ def out_of_range(df):
         media_br = somma_validi_br / n_validi_br
     if n_validi_peda != 0:    
         media_peda = somma_validi_peda / n_validi_peda
+        
+        
+    # valutazione soglia
     
-    if n_fuori_range_hr >= soglia_30:
+    if n_fuori_range_hr >= soglia_30 or n_fuori_range_br >= soglia_30 or n_fuori_range_peda >= soglia_30:
         # conteggio >= 30% tempo totale -> eliminare la sessione
         return True
     else:
@@ -156,23 +173,6 @@ def out_of_range(df):
             if tipo == "Palm.EDA":
                 df.loc[df["Time"] == tempo, tipo] = media_peda
         return False
-        
-
-
-    """
-    time    hr
-    1       50      totale = 1
-    2       50      totale = 2
-    3       50      totale = 3
-    4       20      conteggio = 1
-    5       20      conteggio = 2
-    6       60      totale = 4
-    7       60      totale = 5
-    8       60      totale = 6
-    9       60      totale = 7
-    10      60      totale = 8
-    """
-
     
 if __name__ == "__main__":
     main()
