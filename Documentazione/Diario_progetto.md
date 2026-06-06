@@ -39,6 +39,16 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 
 - installato python 3.12.0
 - creato ambiente virtuale + requirements
+
+#### Dataset
+
 - setup pulizia dataset
   - ignorate colonne irrilevanti
-  - ignorati soggetti con segnali mancanti
+  - ignorati soggetti con segnali mancanti (da 68 a 53)
+
+
+## 6/06/2026
+
+- estrarre misurazioni diverse per ogni soggetto
+- ignorare soggetti con valori fuori range per un tempo > 30%
+
