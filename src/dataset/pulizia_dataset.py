@@ -17,22 +17,17 @@ def main():
         5: "CD",
         6: "ED",
         7: "MD"
-        # 8: "?"
+        # 8: "FDN/FDL/..."
     }
     
-    # variabili debug
-    num_soggetti_originali = 0
-    num_soggetti_no_missing = 0
     
     with os.scandir(origin) as files:
         for file in files:
             df = extract_cols(file)
-            num_soggetti_originali += 1
             generate_csv(df, output_dir + "\\without_car_data", Path(file.name).stem+"no_car") # csv senza colonne irrilevanti
             if not check_missing_signals(df):
                 dataframes.append((Path(file.name).stem, df))
-    
-    num_soggetti_no_missing = len(dataframes)
+
     
     for name, dataframe in dataframes:
         generate_csv(dataframe, output_dir + "\\deleted_missing", name+"data_exists") # csv senza soggetti con segnali mancanti
@@ -41,24 +36,24 @@ def main():
         misurazioni = extract_measures(dataframe)
         for _, mis in enumerate(misurazioni):
             drive = mis["Drive"].iloc[0]
-            drive = math.floor(drive)
-            if drive in [2, 3, 4, 5, 6, 7]:
-                
-                generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
-                if not (out_of_range(mis)):
-                    generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
-    
+            drive = math.floor(drive)    
+            generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
+            if not (out_of_range(mis)):
+                generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
+
                 
 # NON legge colonne non relative a segnali di interesse
 def extract_cols(file):
     cols = ["Time", "Drive", "Stimulus", "Failure", "Palm.EDA", "Heart.Rate", "Breathing.Rate", "Perinasal.Perspiration"]
-    return pd.read_csv(file, usecols=cols)
+    df = pd.read_csv(file, usecols=cols)
+    return df[(df["Drive"] > 1) & (df["Drive"] < 8)]
+
 
 
 # scarta soggetti che non presentano uno dei segnali richiesti in nessun istante di tempo
 def check_missing_signals(df):
     signals_cols = ["Palm.EDA", "Heart.Rate", "Breathing.Rate", "Perinasal.Perspiration"]
-    if df[(df["Drive"] > 1) & (df["Drive"] < 8)][signals_cols].isnull().any().any(): 
+    if df[signals_cols].isnull().any().any() or df[df["Failure"] > 0].any().any(): 
         return True
     else:
         return False

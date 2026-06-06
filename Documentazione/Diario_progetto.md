@@ -61,6 +61,8 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
   - media calcolata solo su valori validi e numero di valori validi (calcolo separato per ogni segnale)
   - se valori fuori range >= 30% totale elimino tutto il soggetto (?)
 
+- **l'ordine delle sessioni da 4 a 7 è random (ma proprio random)**
+
 #### Operazioni svolte
 
 - metodo per generazione file csv intermedi per la verifica di ogni passaggio
