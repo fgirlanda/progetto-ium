@@ -49,6 +49,23 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 
 ## 6/06/2026
 
-- estrarre misurazioni diverse per ogni soggetto
+### Dataset
+
+#### Interpretazione
+
+- l'esperimento 1 ha 7 sezioni: B, PD, RD, LD, CD, ED, MD
+- la sessione B viene scartata nel paper
+- c'è una sessione extra (8) nei file csv scaricati: la scarto (?)
+- stabilito che:
+  - **sessione 8 scartata** 
+  - media calcolata solo su valori validi e numero di valori validi (calcolo separato per ogni segnale)
+  - se valori fuori range >= 30% totale elimino tutto il soggetto (?)
+
+#### Operazioni svolte
+
+- metodo per generazione file csv intermedi per la verifica di ogni passaggio
+- estratte misurazioni diverse per ogni soggetto
 - ignorare soggetti con valori fuori range per un tempo > 30%
+- assegnare media segnale a valori fuori range per un tempo <30%
+
 

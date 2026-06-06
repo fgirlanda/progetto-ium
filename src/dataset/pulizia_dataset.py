@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 import pandas as pd
@@ -7,6 +8,16 @@ def main():
     origin = r'C:\\DEV\\MATLAB\\progetto-ium\\Risorse\\R-Friendly Study Data'
     output_dir = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data'
     dataframes = []
+    # B, PD, RD, LD, CD, ED, MD
+    sections = {
+        # 1: "B",
+        2: "PD",
+        3: "RD",
+        4: "LD",
+        5: "CD",
+        6: "ED",
+        7: "MD"
+    }
     
     with os.scandir(origin) as files:
         for file in files:
@@ -19,7 +30,14 @@ def main():
         generate_csv(dataframe, output_dir + "\\deleted_missing", name+"data_exists") # csv senza soggetti con segnali mancanti
     
     for name, dataframe in dataframes:
-        extract_measures(dataframe)
+        misurazioni = extract_measures(dataframe)
+        for i, mis in enumerate(misurazioni):
+            drive = mis["Drive"].iloc[0]
+            drive = math.floor(drive)
+            if drive in [2, 3, 4, 5, 6, 7]:
+                generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
+                if not (out_of_range(mis)):
+                    generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
 
 # NON legge colonne non relative a segnali di interesse
 def extract_cols(file):
@@ -36,11 +54,24 @@ def check_missing_signals(df):
     
 # estrae singole misurazioni per ogni soggetto
 def extract_measures(df):
-    pass
+    misurazioni = []
+    corrente = []
+
+    for _, row in df.iterrows():
+        if row["Time"] == 1 and corrente:
+            # if not check_missing_signals(pd.DataFrame(corrente)): # non aggiungo sezioni con segnali mancanti
+            misurazioni.append(pd.DataFrame(corrente))
+            corrente = []
+        corrente.append(row)  # fuori dall'if: la riga con Time==1 va nella nuova sessione
+
+    if corrente:  # aggiungi l'ultima sessione
+        misurazioni.append(pd.DataFrame(corrente))
+
+    return misurazioni
 
 
 # crea un nuovo csv partendo dal df (df=dataframe, path=path cartella nuovo csv, name=nome del nuovo csv)
-def generate_csv(df, path, name): 
+def generate_csv(df: pd.DataFrame, path, name): 
     # creare cartella se non esiste
     output = Path(path)
     output.mkdir(parents=True, exist_ok=True)
@@ -48,7 +79,100 @@ def generate_csv(df, path, name):
     # creare nuovo csv
     df.to_csv(output / (name + ".csv"), index=False)
 
+
+# elaborazione sezioni con segnali fuori range
+def out_of_range(df):
+    # calcolare 30% tempo totale = len(df) * 0.3
+    soglia_30 = len(df)*0.3
     
+    # variabili
+    n_fuori_range_hr = 0 # numero valori hr fuori range
+    n_fuori_range_br = 0 # numero valori br fuori range
+    n_fuori_range_peda = 0 # numero valori peda fuori range
+    
+    n_validi_hr = 0 # numero valori hr validi
+    n_validi_br = 0 # numero valori br validi
+    n_validi_peda = 0 # numero valori peda validi
+    
+    somma_validi_hr = 0 # somma valori hr validi
+    somma_validi_br = 0 # somma valori br validi
+    somma_validi_peda = 0 # somma valori peda validi
+    
+    media_hr = 0
+    media_br = 0
+    media_peda = 0
+    
+    sostituzioni = []
+    
+    # scorro tutte le righe
+    for _, row in df.iterrows():
+        # HR
+        hr_val = row["Heart.Rate"]
+        
+        if hr_val < 40 or hr_val > 120: # valore hr fuori range
+            n_fuori_range_hr += 1
+            sostituzioni.append((row["Time"], "Heart.Rate"))
+        else: # valore valido
+            n_validi_hr += 1
+            somma_validi_hr += hr_val
+        
+        # BR
+        br_val = row["Breathing.Rate"]
+        if br_val < 4 or br_val > 40: # valore fuori range
+            n_fuori_range_br += 1
+            sostituzioni.append((row["Time"], "Breathing.Rate"))
+        else: # valore valido
+            n_validi_br += 1
+            somma_validi_br += br_val
+        
+        # PEDA
+        peda_val = row["Palm.EDA"]
+        if peda_val < 28 or peda_val > 628: # valore fuori range
+            n_fuori_range_peda += 1
+            sostituzioni.append((row["Time"], "Palm.EDA"))
+        else: # valore valido
+            n_validi_peda += 1
+            somma_validi_peda += peda_val
+        
+    
+    # calcolo media HR, BR, PEDA
+    if n_validi_hr != 0:
+        media_hr = somma_validi_hr / n_validi_hr
+    if n_validi_br != 0:
+        media_br = somma_validi_br / n_validi_br
+    if n_validi_peda != 0:    
+        media_peda = somma_validi_peda / n_validi_peda
+    
+    if n_fuori_range_hr >= soglia_30:
+        # conteggio >= 30% tempo totale -> eliminare la sessione
+        return True
+    else:
+        # conteggio < 30% tempo totale -> sostituire valori fuori range con media corrispondente
+        for tempo, tipo in sostituzioni:
+            if tipo == "Heart.Rate":
+                df.loc[df["Time"] == tempo, tipo] = media_hr
+            if tipo == "Breathing.Rate":
+                df.loc[df["Time"] == tempo, tipo] = media_br
+            if tipo == "Palm.EDA":
+                df.loc[df["Time"] == tempo, tipo] = media_peda
+        return False
+        
+
+
+    """
+    time    hr
+    1       50      totale = 1
+    2       50      totale = 2
+    3       50      totale = 3
+    4       20      conteggio = 1
+    5       20      conteggio = 2
+    6       60      totale = 4
+    7       60      totale = 5
+    8       60      totale = 6
+    9       60      totale = 7
+    10      60      totale = 8
+    """
+
     
 if __name__ == "__main__":
     main()
