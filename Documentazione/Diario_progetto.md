@@ -69,5 +69,10 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 - estratte misurazioni diverse per ogni soggetto
 - ignorare soggetti con valori fuori range per un tempo > 30%
 - assegnare media segnale a valori fuori range per un tempo <30%
+- **compromesso: accettati 38 soggetti al posto di 37 post-pulizia**
+
+### Features
+
+- inizio feature extraction
 
 
