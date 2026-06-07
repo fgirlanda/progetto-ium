@@ -81,4 +81,11 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 ### Features
 
 - divisione in segmenti in modo manuale (NON usando `rolling` perchè restituisce valori NaN che andrebbero gestiti aumentando la complessità)
+- estrazione feature per ogni segmento usando `scipy` e `numpy`
+- creazione lista_stree e lista_no_stress, ogni lista contiene tuple (che rappresentano i singoli segmenti) formate da:
+  - id soggetto
+  - tipo segnale
+  - dict features
+- trasformazione liste in dataframe (formato richiesto da `scikit-learn`)
+- generazione csv `full_set`
 
