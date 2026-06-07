@@ -76,3 +76,9 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 - inizio feature extraction
 
 
+## 7/06/2026
+
+### Features
+
+- divisione in segmenti in modo manuale (NON usando `rolling` perchè restituisce valori NaN che andrebbero gestiti aumentando la complessità)
+
