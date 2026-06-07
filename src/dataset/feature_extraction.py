@@ -34,14 +34,15 @@ from scipy import stats as st
         # segmenti (che contengono feature) -> tupla
 
 def main():
-    path = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\soggetti_in_range'
+    path_origin = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\soggetti_in_range'
+    path_target = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set'
     
     stress_sessions = ["CD", "ED", "MD"]
 
     lista_stress = []
     lista_no_stress = []
     
-    with os.scandir(path) as subdirs:
+    with os.scandir(path_origin) as subdirs:
         for dir_soggetto in subdirs:
             id_soggetto = int(dir_soggetto.name[1:])
 
@@ -93,10 +94,32 @@ def main():
                             t_corrente += step
                             
                             
+    # creazione lista unica
+    lista_completa = []
     
-    print(len(lista_stress))
-    print(len(lista_no_stress))             
+    for id_soggetto, tipo_segnale, features in lista_stress:
+        lista_completa.append({
+            "id_soggetto": id_soggetto,
+            "tipo_segnale": tipo_segnale,
+            "label": "stress",
+            **features
+        })
 
+    for id_soggetto, tipo_segnale, features in lista_no_stress:
+        lista_completa.append({
+            "id_soggetto": id_soggetto,
+            "tipo_segnale": tipo_segnale,
+            "label": "no_stress",
+            **features
+        })
+
+    df = pd.DataFrame(lista_completa)
+    output = Path(path_target)
+    output.mkdir(parents=True, exist_ok=True)
+    df.to_csv(output / "full_set.csv", index=False)   
+    
+          
+# funzione di estrazione feature da un segmento
 def extract_features(segmento: DataFrame):
     dati = segmento.iloc[:, 1]
     
@@ -137,11 +160,12 @@ def extract_features(segmento: DataFrame):
     # (15) Interquartile range of the intensity values; 
     iqr = st.iqr(dati)                                       
     # (16) Spectral power density;
-    freqs, spd = sp.signal.welch(dati, fs=1.0, nperseg=len(dati))
+    freqs, spd_total = sp.signal.welch(dati, fs=1.0, nperseg=len(dati))
+    spd = np.sum(spd_total)
     # (17) Mean of the spectral power density;              
-    spd_mean = np.mean(spd)
+    spd_mean = np.mean(spd_total)
     # (18) Median of the spectral power density;                                  
-    spd_median = np.median(spd)       
+    spd_median = np.median(spd_total)       
                           
     rmsd = intervals_std = np.nan
     peaks, _ = sp.signal.find_peaks(dati)
@@ -158,7 +182,8 @@ def extract_features(segmento: DataFrame):
     il tempo è suddiviso in secondi, per cui è impossibile recuperare, da questa versione del dataset, una sensibilità nell'ordine dei ms
     la feature perderebbe di significato, quindi viene omessa
     
-    n_diff_intervals = np.sum(np.abs(np.diff(intervals)) > 50)         # (21) The number of pairs of successive peaks intervals that differ by more than 50 ms.
+    # (21) The number of pairs of successive peaks intervals that differ by more than 50 ms.
+    n_diff_intervals = np.sum(np.abs(np.diff(intervals)) > 50)        
     """
     features = {
         "arith_mean" : arith_mean,                                 
@@ -176,11 +201,12 @@ def extract_features(segmento: DataFrame):
         "rms" : rms,                       
         "entropy" : entropy,
         "iqr" : iqr,                                        
-        "freqs" : freqs,              
+        "spd" : spd,              
         "spd_mean" : spd_mean,                                   
         "spd_median" : spd_median,                        
         "rmsd" : rmsd,           
-        "intervals_std" : intervals_std,                     
+        "intervals_std" : intervals_std
+        # n_diff_intervals (21)                    
     }
     
     return features
