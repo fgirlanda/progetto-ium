@@ -11,6 +11,8 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
+from utility.utility import generate_csv
+
 def main():
     # leggere il csv in un dataframe
     path_raw = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set\\full_set.csv'
@@ -112,13 +114,6 @@ def five_fold_cf(X, y):
     }
         
 
-def generate_csv(df: DataFrame, path_dir, nome_file): 
-    # creare cartella se non esiste
-    output = Path(path_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    
-    # creare nuovo csv
-    df.to_csv(output / (nome_file + ".csv"), index=False)
     
 
 ##############################################

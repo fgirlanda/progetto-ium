@@ -1,144 +1,302 @@
-# Diario lavori progetto Interfacce Uomo-Macchina
+# Diario di Progetto – Replica Parziale di "Multimodal Car Driver Stress Recognition"
 
-Autore: Girlanda Francesco
+**Autore:** Francesco Girlanda
 
 ## Introduzione
 
-Questo documento documenterà le attività svolte giorno per giorno al fine di replicare lo studio target selezionato*
+Questo progetto nasce con l'obiettivo di replicare parzialmente il lavoro:
 
-*inserire riferimenti paper e dataset (licenza, url, ...)
+**Simone Bianco, Paolo Napoletano, Raimondo Schettini**
+*Multimodal Car Driver Stress Recognition*
+PervasiveHealth 2019.
 
+L'articolo propone un sistema di riconoscimento dello stress del conducente basato su segnali fisiologici acquisiti durante sessioni di guida simulata. Il problema viene formulato come classificazione binaria tra condizioni di stress e non stress utilizzando diverse tecniche di machine learning.
 
-## 5/06/2026
+La replica realizzata si concentra sulle fasi di:
 
-### Interpretazione dataset
+* preprocessing del dataset;
+* pulizia dei segnali;
+* segmentazione temporale;
+* estrazione delle feature;
+* classificazione mediante k-Nearest Neighbors e Support Vector Machine.
 
-- url non funzionante <http://subjectbook.times.uh.edu/>
-- denominazione file fino a T088, ma numero verificato: 68
-- la directory scaricata (R-Friendly Study Data) contiene i segnali in formato flat in un unica tabella (una per soggetto)
-- ignorare dati di eyetracking aggiunti nella directory scaricata
-- ignorare dati relativi alla guida (velocità, accelerazione ecc.)
+Non sono state implementate le componenti più avanzate del paper, quali reti neurali artificiali, classificatori ensemble e fusione multimodale delle feature.
 
-### Ambiente di sviluppo
+---
 
-#### Progettazione
+# 05/06/2026
 
-- linguaggio: `python 3.12.0`
+## Analisi del dataset
 
-##### Cosa serve
+Durante la fase iniziale è stato analizzato il dataset utilizzato nel paper.
 
-- gestione file csv: `pandas` v2.2
-- manipolazione numerica: `numpy` (formato standard per librerie scientifiche) v2.2
-- processing dei segnali: `scipy` v1.15
-- visualizzazione segnali: `matplotlib` v3.10
-- machine learning: `scikit-learn` v1.6
-- salvataggio dati: `joblib` v1.5
-- monitor progresso operazioni lunghe: `tqdm` v4.67
+Osservazioni principali:
 
-#### Setup
+* il link originale indicato dagli autori non risulta più disponibile;
+* la versione scaricata contiene dati riformattati ("R-Friendly Study Data");
+* i dati di eye-tracking non sono stati utilizzati;
+* sono stati ignorati i dati relativi alla dinamica del veicolo (velocità, accelerazione, frenata, posizione corsia).
 
-- installato python 3.12.0
-- creato ambiente virtuale + requirements
+Sono stati mantenuti esclusivamente i segnali fisiologici:
 
-#### Dataset
+* Palm EDA (P-EDA)
+* Heart Rate (HR)
+* Breathing Rate (BR)
+* Perinasal Perspiration (PER-EDA)
 
-- setup pulizia dataset
-  - ignorate colonne irrilevanti
-  - ignorati soggetti con segnali mancanti (da 68 a 53)
+## Ambiente di sviluppo
 
+### Linguaggio
 
-## 6/06/2026
+* Python 3.12
 
-### Dataset
+### Librerie utilizzate
 
-#### Interpretazione
+| Libreria     | Utilizzo                               |
+| ------------ | -------------------------------------- |
+| pandas       | gestione file CSV                      |
+| numpy        | elaborazione numerica                  |
+| scipy        | signal processing e feature extraction |
+| matplotlib   | visualizzazione dati                   |
+| scikit-learn | classificazione                        |
 
-- l'esperimento 1 ha 7 sezioni: B, PD, RD, LD, CD, ED, MD
-- la sessione B viene scartata nel paper
-- c'è una sessione extra (8) nei file csv scaricati: la scarto (?)
-- stabilito che:
-  - **sessione 8 scartata** 
-  - media calcolata solo su valori validi e numero di valori validi (calcolo separato per ogni segnale)
-  - se valori fuori range >= 30% totale elimino tutto il soggetto (?)
+## Pulizia preliminare
 
-- **l'ordine delle sessioni da 4 a 7 è random (ma proprio random)**
+Sono state eliminate:
 
-#### Operazioni svolte
+* colonne non pertinenti;
+* registrazioni contenenti valori mancanti;
+* soggetti che presentavano errori segnalati dalla colonna `Failure`.
 
-- metodo per generazione file csv intermedi per la verifica di ogni passaggio
-- estratte misurazioni diverse per ogni soggetto
-- ignorare soggetti con valori fuori range per un tempo > 30%
-- assegnare media segnale a valori fuori range per un tempo <30%
-- **compromesso: accettati 33 soggetti al posto di 37 post-pulizia**
+Dopo questa prima fase il numero di soggetti disponibili è stato ridotto da 68 a 53.
 
-### Features
+---
 
-- inizio feature extraction
+# 06/06/2026
 
+## Studio delle sessioni sperimentali
 
-## 7/06/2026
+L'Esperimento I del paper è composto dalle seguenti sessioni:
 
-### Features
+* B (Baseline)
+* PD (Practice Drive)
+* RD (Relaxing Drive)
+* LD (Loaded Drive)
+* CD (Cognitive Drive)
+* ED (Emotional Drive)
+* MD (Motor Drive)
 
-- divisione in segmenti in modo manuale (NON usando `rolling` perchè restituisce valori NaN che andrebbero gestiti aumentando la complessità)
-- estrazione feature per ogni segmento usando `scipy` e `numpy`
-- creazione lista_stree e lista_no_stress, ogni lista contiene tuple (che rappresentano i singoli segmenti) formate da:
-  - id soggetto
-  - tipo segnale
-  - dict features
-- trasformazione liste in dataframe (formato richiesto da `scikit-learn`)
-- generazione csv `full_set`
+La sessione Baseline viene esclusa come indicato nell'articolo.
 
-### Classificazione
+Nella versione del dataset utilizzata è presente inoltre una sessione aggiuntiva (identificata come sessione 8), che è stata rimossa.
 
-- setup classificazione
-- dropna su `four_moment`, `five_moment`, `kurtis`, e `skew` (solo 92 (=23*4) NaN su 15120 -> accettabile)
+## Assunzioni adottate
 
-## 8/06/2026
+Durante l'analisi è emersa una differenza rispetto alla struttura descritta nel paper.
 
-### Classificazione
+Nel dataset originale le sessioni da LD a MD risultano randomizzate tra i soggetti.
 
-- imputazione su `rmsd` e `intervals_std` (rispettivamente 2805 e 1193 NaN -> data leakage accettabile in quanto i valori sono stabili tra soggetti = non influisce molto su training e test set)
-- creato csv con NaN gestiti (dropna o imputazione) -> `full_set_clean.csv`
-- classificazione con knn e svm
+Nella versione R-Friendly tale informazione non è disponibile in maniera esplicita. Per questo motivo è stata adottata la seguente corrispondenza:
 
-### Considerazioni su risultati ottenuti
+| Sessione | Etichetta |
+| -------- | --------- |
+| 2        | PD        |
+| 3        | RD        |
+| 4        | LD        |
+| 5        | CD        |
+| 6        | ED        |
+| 7        | MD        |
 
-Complessivamente accettabili, compatibilmente con le seguenti differenze rispetto al paper:
+## Gestione dei valori fuori range
 
-| Sezione         | Replica                      | Paper originale                 | Commento                                                                                                                                                                                                                                                                                                                  |
-| --------------- | ---------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pulizia dataset | 33 soggetti                  | 37 soggetti                     | Probabilmente dovuto all'utilizzo dei dati riformattati del dataset                                                                                                                                                                                                                                                       |
-| Dataset         | ordine sessioni incrementale | ordine casuale per sessioni 4-7 | Il dataset originale strutturato randomizza le sessioni 4-7, mentre nella versione riformattata le sessioni vanno da 1 a 8 e non vengono etichettate. In questa replica si assume che le sessioni, nel dataset riformattato, seguano sempre l'ordine fissato dal paper (1=B, 2=PD, 3=RD, 4=LD, 5=CD, 6=ED, 7=MD, 8=extra) |
+Sono state implementate le stesse soglie riportate nell'articolo:
 
-#### PEDA
-- kNN micro accuracy paper = 53.88 %
-- kNN micro accuracy mio = 51.15 %
+| Segnale        | Range valido |
+| -------------- | ------------ |
+| Heart Rate     | 40 – 120     |
+| Breathing Rate | 4 – 40       |
+| Palm EDA       | 28 – 628     |
 
-- SVM micro accuracy paper = 54.31 %
-- SVM micro accuracy mio = 56.37 %
+Per ogni sessione:
 
-#### HR
-- kNN micro accuracy paper = 58.72 %
-- kNN micro accuracy mio = 50.43 %
+* se oltre il 30% dei campioni risultava fuori range, la sessione veniva eliminata;
+* altrimenti i valori anomali venivano sostituiti con la media dei campioni validi dello stesso segnale.
 
-- SVM micro accuracy paper = 56.87 %
-- SVM micro accuracy mio = 56.09 %
+Al termine della procedura sono stati mantenuti 33 soggetti.
 
-#### BR
-- kNN micro accuracy paper = 55.97 %
-- kNN micro accuracy mio = 53.58 %
+---
 
-- SVM micro accuracy paper = 62.39 %
-- SVM micro accuracy mio = 63.00 %
+# 07/06/2026
 
-#### PEREDA
-- kNN micro accuracy paper = 54.54 %
-- kNN micro accuracy mio = 53.65 %
+## Segmentazione temporale
 
-- SVM micro accuracy paper = 61.42 %
-- SVM micro accuracy mio = 58.91 %
+I segnali sono stati segmentati manualmente utilizzando:
 
+* finestra di 60 secondi;
+* overlap del 50%;
+* avanzamento di 30 secondi.
 
+Questa configurazione replica quella utilizzata nel paper.
 
+## Estrazione delle feature
+
+Per ciascun segmento sono state estratte 20 feature.
+
+Le feature comprendono:
+
+### Dominio del tempo
+
+* media
+* mediana
+* quarto momento
+* quinto momento
+* deviazione standard
+* varianza
+* kurtosis
+* skewness
+* somma
+* massimo
+* minimo
+* range
+* RMS
+* entropia
+* IQR
+
+### Dominio della frequenza
+
+* spectral power density
+* media PSD
+* mediana PSD
+
+### Feature basate sui picchi
+
+* RMS delle differenze tra intervalli
+* deviazione standard degli intervalli
+
+Le feature sono state organizzate in un dataset tabellare utilizzabile da scikit-learn.
+
+## Gestione dei valori mancanti
+
+Per segmenti con varianza quasi nulla non è stato possibile calcolare:
+
+* quarto momento;
+* quinto momento;
+* kurtosis;
+* skewness.
+
+Tali valori sono stati marcati come NaN.
+
+---
+# 08/06/2026
+
+## Pulizia finale delle feature
+
+Le osservazioni contenenti NaN nelle feature:
+
+* four_moment
+* five_moment
+* kurtosis
+* skew
+
+sono state eliminate.
+
+I NaN presenti nelle feature:
+
+* rmsd
+* intervals_std
+
+sono stati sostituiti mediante imputazione della media.
+
+## Classificazione
+
+Sono stati implementati due classificatori:
+
+### k-Nearest Neighbors
+
+Configurazione:
+
+* k = 1
+* distanza euclidea
+
+### Support Vector Machine
+
+Configurazione:
+
+* kernel RBF
+* parametri di default di scikit-learn
+
+## Validazione
+
+È stata utilizzata:
+
+* Stratified 5-Fold Cross Validation
+
+Prima dell'addestramento è stata applicata una normalizzazione Min-Max calcolata esclusivamente sul training set di ciascun fold.
+
+## Risultati
+
+Le accuratezze ottenute risultano comparabili con quelle riportate nel paper per i segnali considerati singolarmente.
+
+I risultati mostrano una buona coerenza generale nonostante le differenze presenti tra il dataset utilizzato e quello originale.
+
+---
+
+# Differenze rispetto al paper originale
+
+## Componenti replicate
+
+* pulizia dei segnali;
+* segmentazione temporale;
+* estrazione delle feature;
+* classificazione kNN;
+* classificazione SVM;
+* validazione 5-Fold.
+
+## Semplificazioni introdotte
+
+### Riduzione del numero di feature
+
+Il paper utilizza 21 feature.
+
+La replica utilizza 20 feature.
+
+La feature:
+
+> numero di coppie di intervalli tra picchi che differiscono di oltre 50 ms
+
+è stata omessa poiché il dataset disponibile non consente misurazioni con precisione nell'ordine dei millisecondi.
+
+### Dataset differente
+
+È stata utilizzata la versione "R-Friendly Study Data" invece del dataset originale.
+
+### Numero di soggetti
+
+* Paper: 37 soggetti
+* Replica: 33 soggetti
+
+### Classificatori non implementati
+
+Non sono stati implementati:
+
+* Artificial Neural Networks (ANN);
+* Stacking classifier.
+
+### Fusione multimodale
+
+Il paper valuta anche la concatenazione delle feature provenienti da tutti i segnali.
+
+Nella replica ogni segnale è stato classificato separatamente.
+
+### Leave-One-Subject-Out
+
+Il protocollo LOSO presente nel paper non è stato implementato.
+
+---
+
+# Conclusioni
+
+La replica realizzata riproduce correttamente le principali fasi di preprocessing, segmentazione ed estrazione delle feature descritte nell'articolo.
+
+I risultati ottenuti risultano coerenti con le semplificazioni metodologiche e l'utilizzo di una diversa versione del dataset, c'è un margine relativamente piccolo di errore rispetto a quelli pubblicati dagli autori per i singoli segnali fisiologici.
 

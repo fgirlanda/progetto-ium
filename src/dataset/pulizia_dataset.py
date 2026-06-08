@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 import os
 
+from utility.utility import generate_csv
+
 def main():
     origin = r'C:\\DEV\\MATLAB\\progetto-ium\\Risorse\\R-Friendly Study Data'
     output_dir = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data'
@@ -77,17 +79,6 @@ def extract_measures(df):
         misurazioni.append(pd.DataFrame(corrente))
 
     return misurazioni
-
-
-# crea un nuovo csv partendo dal df (df=dataframe, path=path cartella nuovo csv, name=nome del nuovo csv)
-def generate_csv(df: pd.DataFrame, path_dir, nome_file): 
-    # creare cartella se non esiste
-    output = Path(path_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    
-    # creare nuovo csv
-    df.to_csv(output / (nome_file + ".csv"), index=False)
-
 
 # elaborazione sezioni con segnali fuori range
 def out_of_range(df):
@@ -168,6 +159,7 @@ def out_of_range(df):
             if tipo == "Palm.EDA":
                 df.loc[df["Time"] == tempo, tipo] = media_peda
         return False
+    
     
 if __name__ == "__main__":
     main()
