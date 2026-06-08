@@ -6,12 +6,12 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import LeaveOneGroupOut, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
-from utility.utility import generate_csv
+from src.utility.utility import generate_csv
 
 ############################################################
 # TODO
@@ -51,7 +51,6 @@ def main():
     X_peda, y_peda, groups_peda = separate_columns(df_clean, "Palm.EDA")
     X_hr, y_hr, groups_hr = separate_columns(df_clean, "Heart.Rate")
     X_br, y_br, groups_br = separate_columns(df_clean, "Breathing.Rate")
-    
     X_pereda, y_pereda, groups_pereda = separate_columns(df_clean, "Perinasal.Perspiration")
     
     # cf = classification
@@ -62,21 +61,33 @@ def main():
         "Perinasal.Perspiration": (X_pereda, y_pereda, groups_pereda)
     }
     
-    results = []
+    results_5fold = []
+    results_loso = []
     for nome_segnale, (X, y, groups) in cf_signals_datasets.items():
-        results.append((nome_segnale, five_fold_cf(X, y)))
+        results_5fold.append((nome_segnale, five_fold_cf(X, y)))
+        results_loso.append((nome_segnale, loso_knn(X, y, groups)))
     
-    lista_righe = []
-    for nome_segnale, res in results:
-        lista_righe.append({
+    lista_righe_5fold = []
+    for nome_segnale, res in results_5fold:
+        lista_righe_5fold.append({
+            "segnale": nome_segnale,
+            **res
+        })
+        
+    lista_righe_loso = []
+    for nome_segnale, res in results_loso:
+        lista_righe_loso.append({
             "segnale": nome_segnale,
             **res
         })
         
     path_results = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\results'
 
-    df_results = pd.DataFrame(lista_righe)
-    generate_csv(df_results, path_results, "results")
+    df_results_5fold = pd.DataFrame(lista_righe_5fold)
+    generate_csv(df_results_5fold, path_results, "results_5fold")
+    
+    df_results_loso = pd.DataFrame(lista_righe_loso)
+    generate_csv(df_results_loso, path_results, "results_loso")
         
         
 def separate_columns(df: DataFrame, signal: str):
@@ -97,6 +108,39 @@ def five_fold_cf(X, y):
     svm_scores = []
     
     for train_i, test_i in skf.split(X, y):
+        X_train, X_test = X.iloc[train_i], X.iloc[test_i]
+        y_train, y_test = y.iloc[train_i], y.iloc[test_i]
+
+        # normalizzazione
+        scaler = MinMaxScaler()
+        X_train = scaler.fit_transform(X_train)
+        X_test = scaler.transform(X_test)
+        
+        # KNN
+        knn = KNeighborsClassifier(n_neighbors=1)
+        knn.fit(X_train, y_train)
+        knn_scores.append(accuracy_score(y_test, knn.predict(X_test)))
+        
+        # SVM
+        svm = SVC(kernel="rbf")
+        svm.fit(X_train, y_train)
+        svm_scores.append(accuracy_score(y_test, svm.predict(X_test)))
+    
+    return {
+        "knn_mean": np.mean(knn_scores),
+        "knn_std": np.std(knn_scores),
+        "svm_mean": np.mean(svm_scores),
+        "svm_std": np.std(svm_scores)
+    }
+    
+def loso_knn(X, y, groups):
+    logo = LeaveOneGroupOut()
+
+    knn_scores = []
+    svm_scores = []
+
+    for train_i, test_i in logo.split(X, y, groups):
+
         X_train, X_test = X.iloc[train_i], X.iloc[test_i]
         y_train, y_test = y.iloc[train_i], y.iloc[test_i]
 

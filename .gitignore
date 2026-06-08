@@ -2,3 +2,4 @@
 *.code-workspace
 /Risorse/pandas_csv_guide.md
 /src/data
+**/__pycache__/
