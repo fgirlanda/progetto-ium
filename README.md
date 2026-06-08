@@ -94,7 +94,7 @@ Operazioni:
 Esecuzione:
 
 ```bash
-python src/dataset/pulizia_dataset.py
+python -m src.dataset.pulizia_dataset
 ```
 
 Output:
@@ -121,7 +121,7 @@ Operazioni:
 Esecuzione:
 
 ```bash
-python src/dataset/feature_extraction.py
+python -m src.dataset.feature_extraction
 ```
 
 Output:
@@ -145,7 +145,7 @@ Operazioni:
 Esecuzione:
 
 ```bash
-python src/classification/classify.py
+python -m src.classification.classify
 ```
 
 Output:
@@ -157,21 +157,41 @@ data/results/results.csv
 
 ## Risultati
 
-I risultati ottenuti sono confrontabili con quelli riportati nel paper per la classificazione dei singoli segnali fisiologici.
+I risultati ottenuti sono confrontabili con quelli riportati nel paper per la classificazione dei singoli segnali fisiologici:
 
 | Segnale | kNN Paper | kNN Replica | SVM Paper | SVM Replica |
 | ------- | --------- | ----------- | --------- | ----------- |
-| PEDA    | 53.88%    | 51.15%      | 54.31%    | 56.37%      |
-| HR      | 58.72%    | 50.43%      | 56.87%    | 56.09%      |
-| BR      | 55.97%    | 53.58%      | 62.39%    | 63.00%      |
-| PEREDA  | 54.54%    | 53.65%      | 61.42%    | 58.91%      |
+| PEDA    | 53.88%    | 51.17%      | 54.31%    | 56.45%      |
+| HR      | 58.72%    | 50.22%      | 56.87%    | 56.09%      |
+| BR      | 55.97%    | 53.80%      | 62.39%    | 62.55%      |
+| PEREDA  | 54.54%    | 53.78%      | 61.42%    | 59.12%      |
+
+Mentre per quanto riguarda l'utilizzo di tutti i segnali, concatenando le feature, i risultati replicati si discostano parecchio da quelli originali:
+
+
+Primo tentativo:
+
+| Segnale | kNN Paper | kNN Replica | SVM Paper | SVM Replica |
+| ------- | --------- | ----------- | --------- | ----------- |
+| ALL     | 74.51%    | 53.62%      | 74.37%    | 61.40%      |
+
+Secondo tentativo:
+
+| Segnale | kNN Paper | kNN Replica | SVM Paper | SVM Replica |
+| ------- | --------- | ----------- | --------- | ----------- |
+| ALL     | 74.51%    | 88.00%      | 74.37%    | 99.9%       |
+
+Terzo tentativo:
+
+| Segnale | kNN Paper | kNN Replica | SVM Paper | SVM Replica |
+| ------- | --------- | ----------- | --------- | ----------- |
+| ALL     | 74.51%    | 83.50%      | 74.37%    | 99.8%       |
+
 
 Questa replica non implementa:
 
 * Artificial Neural Networks (ANN);
 * Stacking classifier;
-* Fusione multimodale delle feature;
-* Leave-One-Subject-Out Cross Validation;
 * Ricerca automatica degli iperparametri SVM.
 
 ## Semplificazioni introdotte
@@ -201,18 +221,7 @@ La feature:
 
 Non sono stati implementati:
 
-* Artificial Neural Networks (ANN);
 * Stacking classifier.
-
-### Fusione multimodale
-
-Il paper valuta anche la concatenazione delle feature provenienti da tutti i segnali.
-
-Nella replica ogni segnale è stato classificato separatamente.
-
-### Leave-One-Subject-Out
-
-Il protocollo LOSO presente nel paper non è stato implementato.
 
 ---
 
@@ -220,7 +229,13 @@ Il protocollo LOSO presente nel paper non è stato implementato.
 
 La replica realizzata riproduce correttamente le principali fasi di preprocessing, segmentazione ed estrazione delle feature descritte nell'articolo.
 
-I risultati ottenuti risultano coerenti con le semplificazioni metodologiche e l'utilizzo di una diversa versione del dataset, c'è un margine relativamente piccolo di errore rispetto a quelli pubblicati dagli autori per i singoli segnali fisiologici.
+I risultati ottenuti risultano coerenti con le semplificazioni metodologiche e l'utilizzo di una diversa versione del dataset, c'è un margine relativamente piccolo di errore rispetto a quelli pubblicati dagli autori per i singoli segnali fisiologici, mentre il margine aumenta per quanto riguarda la concatenazione delle feature. 
+
+Primo tentativo: non tenere traccia dell'id del segmento e della sessione, durante l'estrazione delle feature, ha causato valori NaN che sono stati poi eliminati, portando a un disallineamento delle finestre e deteriorando le performance del modello.
+
+Secondo tentativo: le finestre sono allineate, ma probabilmente il data leakage, dovuto all'imputazione operata su tutto il dataset per valori NaN, non è più trascurabile, dato che concatenare ha aumentato lo spazio delle feature 
+
+Terzo tentativo: l'imputazione è stata spostata dentro al singolo fold, tuttavia i risultati sono comunque errati, le cause possono essere il numero minore di soggetti post-pulizia (33 vs 37), la 21esima feature non utilizzata o un passaggio errato nell'estrazione delle feature
 
 
 ## Autore

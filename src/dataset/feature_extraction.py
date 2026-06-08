@@ -6,6 +6,8 @@ from pandas import DataFrame
 import scipy as sp
 from scipy import stats as st
 
+from src.utility.utility import SESSIONS
+
 ############################################################
 # TODO
 # multi-thread (un thread per ogni segmento)
@@ -15,8 +17,7 @@ def main():
     path_origin = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\soggetti_in_range'
     path_target = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set'
     
-    stress_sessions = ["CD", "ED", "MD"]
-
+    stress_sessions = [5, 6, 7]
     lista_stress = []
     lista_no_stress = []
     
@@ -26,7 +27,11 @@ def main():
 
             with os.scandir(dir_soggetto) as sessioni:
                 for sessione in sessioni:
-                    stress = ((Path(sessione.name)).stem.split("_")[1] in stress_sessions) # True = stress, Flase = no_stress
+                    session_id = (Path(sessione.name)).stem.split("_")[1]
+                    inv = {v: k for k, v in SESSIONS.items()}
+                    
+                    session_id = inv[session_id]  
+                    stress = (session_id in stress_sessions) # True = stress, Flase = no_stress
                     # lettura sessione
                     df = pd.read_csv(sessione)
                     
@@ -64,9 +69,9 @@ def main():
                             
                             # salvare features segmento
                             if stress:
-                                lista_stress.append((id_soggetto, tipo_segnale, features))
+                                lista_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
                             else:
-                                lista_no_stress.append((id_soggetto, tipo_segnale, features))
+                                lista_no_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
                             
                             # passo a segmento successivo
                             t_corrente += step
@@ -75,17 +80,21 @@ def main():
     # creazione lista unica
     lista_completa = []
     
-    for id_soggetto, tipo_segnale, features in lista_stress:
+    for id_soggetto, t_corrente, session_id, tipo_segnale, features in lista_stress:
         lista_completa.append({
             "id_soggetto": id_soggetto,
+            "t_corrente": t_corrente,
+            "session_id": session_id,
             "tipo_segnale": tipo_segnale,
             "label": "stress",
             **features
         })
 
-    for id_soggetto, tipo_segnale, features in lista_no_stress:
+    for id_soggetto, t_corrente, session_id, tipo_segnale, features in lista_no_stress:
         lista_completa.append({
             "id_soggetto": id_soggetto,
+            "t_corrente": t_corrente,
+            "session_id": session_id,
             "tipo_segnale": tipo_segnale,
             "label": "no_stress",
             **features

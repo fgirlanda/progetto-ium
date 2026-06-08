@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import os
 
-from src.utility.utility import generate_csv
+from src.utility.utility import SESSIONS, generate_csv
 
 ############################################################
 # TODO
@@ -16,16 +16,7 @@ def main():
     output_dir = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data'
     dataframes = []
     # B, PD, RD, LD, CD, ED, MD
-    sections = {
-        # 1: "B",
-        2: "PD",
-        3: "RD",
-        4: "LD",
-        5: "CD",
-        6: "ED",
-        7: "MD"
-        # 8: "FDN/FDL/..."
-    }
+
     
     
     with os.scandir(origin) as files:
@@ -44,9 +35,9 @@ def main():
         for _, mis in enumerate(misurazioni):
             drive = mis["Drive"].iloc[0]
             drive = math.floor(drive)    
-            generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
+            generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
             if not (out_of_range(mis)):
-                generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{sections[drive]}") # crea un csv per ogni sessione con label
+                generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
 
                 
 # NON legge colonne non relative a segnali di interesse

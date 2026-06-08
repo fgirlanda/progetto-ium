@@ -233,11 +233,11 @@ Configurazione:
 
 Prima dell'addestramento è stata applicata una normalizzazione Min-Max calcolata esclusivamente sul training set di ciascun fold.
 
-## Risultati
+# 09/06/2026
 
-Le accuratezze ottenute risultano comparabili con quelle riportate nel paper per i segnali considerati singolarmente.
-
-I risultati mostrano una buona coerenza generale nonostante le differenze presenti tra il dataset utilizzato e quello originale.
-
+- Aggiunto protocollo LOSO
+- Aggiunta concatenazione feature
+- Aggiunta concatenazione coppia di segnali (HR,BR)
+- Aggiornato readme e documento di presentazione
 
 
