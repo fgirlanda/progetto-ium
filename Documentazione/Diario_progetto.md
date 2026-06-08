@@ -69,7 +69,7 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
 - estratte misurazioni diverse per ogni soggetto
 - ignorare soggetti con valori fuori range per un tempo > 30%
 - assegnare media segnale a valori fuori range per un tempo <30%
-- **compromesso: accettati 38 soggetti al posto di 37 post-pulizia**
+- **compromesso: accettati 33 soggetti al posto di 37 post-pulizia**
 
 ### Features
 
@@ -88,4 +88,57 @@ Questo documento documenterà le attività svolte giorno per giorno al fine di r
   - dict features
 - trasformazione liste in dataframe (formato richiesto da `scikit-learn`)
 - generazione csv `full_set`
+
+### Classificazione
+
+- setup classificazione
+- dropna su `four_moment`, `five_moment`, `kurtis`, e `skew` (solo 92 (=23*4) NaN su 15120 -> accettabile)
+
+## 8/06/2026
+
+### Classificazione
+
+- imputazione su `rmsd` e `intervals_std` (rispettivamente 2805 e 1193 NaN -> data leakage accettabile in quanto i valori sono stabili tra soggetti = non influisce molto su training e test set)
+- creato csv con NaN gestiti (dropna o imputazione) -> `full_set_clean.csv`
+- classificazione con knn e svm
+
+### Considerazioni su risultati ottenuti
+
+Complessivamente accettabili, compatibilmente con le seguenti differenze rispetto al paper:
+
+| Sezione         | Replica                      | Paper originale                 | Commento                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ---------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pulizia dataset | 33 soggetti                  | 37 soggetti                     | Probabilmente dovuto all'utilizzo dei dati riformattati del dataset                                                                                                                                                                                                                                                       |
+| Dataset         | ordine sessioni incrementale | ordine casuale per sessioni 4-7 | Il dataset originale strutturato randomizza le sessioni 4-7, mentre nella versione riformattata le sessioni vanno da 1 a 8 e non vengono etichettate. In questa replica si assume che le sessioni, nel dataset riformattato, seguano sempre l'ordine fissato dal paper (1=B, 2=PD, 3=RD, 4=LD, 5=CD, 6=ED, 7=MD, 8=extra) |
+
+#### PEDA
+- kNN micro accuracy paper = 53.88 %
+- kNN micro accuracy mio = 51.15 %
+
+- SVM micro accuracy paper = 54.31 %
+- SVM micro accuracy mio = 56.37 %
+
+#### HR
+- kNN micro accuracy paper = 58.72 %
+- kNN micro accuracy mio = 50.43 %
+
+- SVM micro accuracy paper = 56.87 %
+- SVM micro accuracy mio = 56.09 %
+
+#### BR
+- kNN micro accuracy paper = 55.97 %
+- kNN micro accuracy mio = 53.58 %
+
+- SVM micro accuracy paper = 62.39 %
+- SVM micro accuracy mio = 63.00 %
+
+#### PEREDA
+- kNN micro accuracy paper = 54.54 %
+- kNN micro accuracy mio = 53.65 %
+
+- SVM micro accuracy paper = 61.42 %
+- SVM micro accuracy mio = 58.91 %
+
+
+
 
