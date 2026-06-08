@@ -13,6 +13,15 @@ from sklearn.svm import SVC
 
 from utility.utility import generate_csv
 
+############################################################
+# TODO
+# multi-thread (?)
+# separare knn e svm
+# implementare leave one sobject out
+# creare dataset con feature concatenate
+# implementare knn e svm con feature concatenate
+############################################################
+
 def main():
     # leggere il csv in un dataframe
     path_raw = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set\\full_set.csv'
@@ -113,12 +122,5 @@ def five_fold_cf(X, y):
         "svm_std": np.std(svm_scores)
     }
         
-
-    
-
-##############################################
-# creazione dataset con feature concatenate
-
-
 if __name__ == "__main__":
     main()

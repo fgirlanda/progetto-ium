@@ -6,32 +6,10 @@ from pandas import DataFrame
 import scipy as sp
 from scipy import stats as st
 
-# parto da soggetti_in_range -> with os.scandir(soggetti_in_range)
-# per ogni soggetto (cartella) -> for dir_soggetto in subdirs
-    # estraggo id soggetto -> int(dir_soggetto.name[1:])
-    # per ogni file (sessione) -> os.scandir(dir_soggetto)
-        # lettura csv -> read_csv
-        # tipo sessione (CD, PD, RD, ...) -> sessione.name (opportunamente processato)
-        # per ogni segnale (colonna) -> df[["Time", "Tipo.Segnale"]] + dict segnali
-            # estrarre segmento -> da tempo_corrente fino a min(tempo_corrente+60, tempo_totale)
-            # calcolo le feature
-            # passo al segmento successivo -> tempo_corrente += 30
-
-# struttura dati esterna -> lista stress ()
-
-    # struttura dati interna -> tupla
-
-        # id soggetto -> int
-        # tipo segnale (br, hr, peda, pereda)
-        # segmenti (che contengono feature) -> tupla
-        
-# struttura dati esterna -> lista no -stress
-
-    # struttura dati interna -> tupla
-
-        # soggetto -> int
-        # tipo segnale (br, hr, peda, pereda)
-        # segmenti (che contengono feature) -> tupla
+############################################################
+# TODO
+# multi-thread (un thread per ogni segmento)
+############################################################
 
 def main():
     path_origin = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\soggetti_in_range'

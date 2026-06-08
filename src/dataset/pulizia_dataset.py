@@ -6,6 +6,11 @@ import os
 
 from utility.utility import generate_csv
 
+############################################################
+# TODO
+# multi-thread
+############################################################
+
 def main():
     origin = r'C:\\DEV\\MATLAB\\progetto-ium\\Risorse\\R-Friendly Study Data'
     output_dir = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data'

@@ -8,9 +8,9 @@ Replica parziale del paper:
 
 ## Obiettivo
 
-L'obiettivo del progetto è replicare parte della pipeline proposta dagli autori per il riconoscimento automatico dello stress del conducente tramite segnali fisiologici.
+L'obiettivo del progetto è replicare parte della pipeline proposta dagli autori, al fine di ottenere dei risultati sufficientemente simili e coerenti con le semplificazioni adottate.
 
-La replica include:
+Il progetto include:
 
 * preprocessing del dataset;
 * pulizia dei segnali;
