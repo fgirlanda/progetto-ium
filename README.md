@@ -62,15 +62,21 @@ pip install -r requirements.txt
 ```text
 src/
 │
-├── step1_preprocessing.py
-├── step2_feature_extraction.py
-├── step3_classification.py
+├── dataset/
+|   ├── pulizia_dataset.py
+|   └── feature_extraction.py
+├── classification/
+|   └── classify.py
+├── utility/
+|   └── utility.py
 │
 └── data/
+    ├── deleted_missing/
+    ├── full_set/
+    ├── results/
     ├── soggetti/
     ├── soggetti_in_range/
-    ├── full_set/
-    └── results/
+    └── without_car_data/
 ```
 
 ## Pipeline (comandi lanciati all'interno della directory del progetto)
@@ -79,11 +85,11 @@ src/
 
 Operazioni:
 
-* eliminazione colonne non necessarie;
-* rimozione soggetti con dati mancanti;
-* eliminazione sessioni non valide;
-* sostituzione valori fuori range;
-* esportazione dataset intermedi.
+1. eliminazione colonne non necessarie;
+2. rimozione soggetti con dati mancanti;
+3. a) eliminazione sessioni non valide;
+3. b) sostituzione valori fuori range;
+4. esportazione dataset intermedi.
 
 Esecuzione:
 
@@ -94,8 +100,11 @@ python src/dataset/pulizia_dataset.py
 Output:
 
 ```text
-data/soggetti/
-data/soggetti_in_range/
+1. data/without_car_data/
+2. data/deleted_missing/
+3.a data/soggetti/
+3.b data/soggetti/
+4. data/soggetti_in_range/
 ```
 
 ---
@@ -106,7 +115,7 @@ Operazioni:
 
 * segmentazione 60 s;
 * overlap 50%;
-* estrazione di 20 feature statistiche e spettrali;
+* estrazione di 20 feature;
 * generazione dataset finale.
 
 Esecuzione:
@@ -136,7 +145,7 @@ Operazioni:
 Esecuzione:
 
 ```bash
-python src/classification/classification.py
+python src/classification/classify.py
 ```
 
 Output:
@@ -150,16 +159,12 @@ data/results/results.csv
 
 I risultati ottenuti sono confrontabili con quelli riportati nel paper per la classificazione dei singoli segnali fisiologici.
 
-Esempio:
-
 | Segnale | kNN Paper | kNN Replica | SVM Paper | SVM Replica |
 | ------- | --------- | ----------- | --------- | ----------- |
 | PEDA    | 53.88%    | 51.15%      | 54.31%    | 56.37%      |
 | HR      | 58.72%    | 50.43%      | 56.87%    | 56.09%      |
 | BR      | 55.97%    | 53.58%      | 62.39%    | 63.00%      |
 | PEREDA  | 54.54%    | 53.65%      | 61.42%    | 58.91%      |
-
-## Limitazioni
 
 Questa replica non implementa:
 
@@ -168,6 +173,55 @@ Questa replica non implementa:
 * Fusione multimodale delle feature;
 * Leave-One-Subject-Out Cross Validation;
 * Ricerca automatica degli iperparametri SVM.
+
+## Semplificazioni introdotte
+
+### Riduzione del numero di feature
+
+Il paper utilizza 21 feature.
+
+La replica utilizza 20 feature.
+
+La feature:
+
+> numero di coppie di intervalli tra picchi che differiscono di oltre 50 ms
+
+è stata omessa poiché il dataset disponibile non consente misurazioni con precisione nell'ordine dei millisecondi.
+
+### Dataset differente
+
+È stata utilizzata la versione "R-Friendly Study Data" invece del dataset originale.
+
+### Numero di soggetti
+
+* Paper: 37 soggetti
+* Replica: 33 soggetti
+
+### Classificatori non implementati
+
+Non sono stati implementati:
+
+* Artificial Neural Networks (ANN);
+* Stacking classifier.
+
+### Fusione multimodale
+
+Il paper valuta anche la concatenazione delle feature provenienti da tutti i segnali.
+
+Nella replica ogni segnale è stato classificato separatamente.
+
+### Leave-One-Subject-Out
+
+Il protocollo LOSO presente nel paper non è stato implementato.
+
+---
+
+# Conclusioni
+
+La replica realizzata riproduce correttamente le principali fasi di preprocessing, segmentazione ed estrazione delle feature descritte nell'articolo.
+
+I risultati ottenuti risultano coerenti con le semplificazioni metodologiche e l'utilizzo di una diversa versione del dataset, c'è un margine relativamente piccolo di errore rispetto a quelli pubblicati dagli autori per i singoli segnali fisiologici.
+
 
 ## Autore
 
