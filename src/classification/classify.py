@@ -11,7 +11,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import SVC
 
-from src.utility.utility import generate_csv
+from src.utility.utility import generate_csv, get_project_root
 
 ############################################################
 # TODO
@@ -20,11 +20,14 @@ from src.utility.utility import generate_csv
 ############################################################
 
 def main():
-    path_results = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\results'
+    project_root = get_project_root()
+    
+    path_results = project_root / "src" / "data" / "results"
     
     # leggere il csv in un dataframe
-    path_raw = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set\\full_set.csv'
-    df_raw = pd.read_csv(path_raw)
+    path_full_set = project_root / "src" / "data" / "full_set"
+    
+    df_raw = pd.read_csv(path_full_set / "full_set.csv")
     # print(df_raw.isna().sum())
     # print(len(df_raw))
     
@@ -45,8 +48,7 @@ def main():
 
     
     # dataframe pulito scritto su csv a parte
-    path_clean = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set'
-    generate_csv(df_clean, path_clean, "full_set_clean")
+    generate_csv(df_clean, path_full_set, "full_set_clean")
     
     # separazione metadati/feature e estrazione gruppi (1 per soggetto) per `LeaveOneGroupOut` validation
     X_peda, y_peda, groups_peda = separate_columns(df_clean, "Palm.EDA")
