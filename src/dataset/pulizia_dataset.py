@@ -12,32 +12,35 @@ from src.utility.utility import SESSIONS, generate_csv
 ############################################################
 
 def main():
-    origin = r'C:\\DEV\\MATLAB\\progetto-ium\\Risorse\\R-Friendly Study Data'
-    output_dir = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data'
+    project_root = Path(__file__).resolve()
+    while project_root.name != "progetto-ium":
+        project_root = project_root.parent
+
+    origin = project_root / "Risorse" / "R-Friendly Study Data"
+    output_dir = project_root / "src" / "data"
     dataframes = []
     # B, PD, RD, LD, CD, ED, MD
 
     
     
-    with os.scandir(origin) as files:
-        for file in files:
-            df = extract_cols(file)
-            generate_csv(df, output_dir + "\\without_car_data", Path(file.name).stem+"no_car") # csv senza colonne irrilevanti
-            if not check_missing_signals(df):
-                dataframes.append((Path(file.name).stem, df))
+    for file in origin.iterdir():
+        df = extract_cols(file)
+        generate_csv(df, output_dir / "without_car_data", Path(file.name).stem+"no_car") # csv senza colonne irrilevanti
+        if not check_missing_signals(df):
+            dataframes.append((Path(file.name).stem, df))
 
     
     for name, dataframe in dataframes:
-        generate_csv(dataframe, output_dir + "\\deleted_missing", name+"data_exists") # csv senza soggetti con segnali mancanti
+        generate_csv(dataframe, output_dir / "deleted_missing", name+"data_exists") # csv senza soggetti con segnali mancanti
     
     for name, dataframe in dataframes:
         misurazioni = extract_measures(dataframe)
         for _, mis in enumerate(misurazioni):
             drive = mis["Drive"].iloc[0]
             drive = math.floor(drive)    
-            generate_csv(mis, output_dir + f"\\soggetti\\{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
+            generate_csv(mis, output_dir / "soggetti" / f"{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
             if not (out_of_range(mis)):
-                generate_csv(mis, output_dir + f"\\soggetti_in_range\\{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
+                generate_csv(mis, output_dir / "soggetti_in_range" / f"{name}", name+f"sez_{SESSIONS[drive]}") # crea un csv per ogni sessione con label
 
                 
 # NON legge colonne non relative a segnali di interesse
