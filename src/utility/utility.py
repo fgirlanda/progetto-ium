@@ -13,6 +13,13 @@ SESSIONS = {
         # 8: "FDN/FDL/..."
     }
 
+def get_project_root():
+    project_root = Path(__file__).resolve()
+    while project_root.name != "progetto-ium":
+        project_root = project_root.parent
+    
+    return project_root
+
 # crea un nuovo csv partendo dal df (df=dataframe, path=path cartella nuovo csv, name=nome del nuovo csv)
 def generate_csv(df: DataFrame, path_dir, nome_file): 
     # creare cartella se non esiste

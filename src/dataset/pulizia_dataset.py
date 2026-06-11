@@ -1,10 +1,9 @@
 import math
+import pandas as pd
 from pathlib import Path
 
-import pandas as pd
-import os
 
-from src.utility.utility import SESSIONS, generate_csv
+from src.utility.utility import SESSIONS, generate_csv, get_project_root
 
 ############################################################
 # TODO
@@ -12,9 +11,7 @@ from src.utility.utility import SESSIONS, generate_csv
 ############################################################
 
 def main():
-    project_root = Path(__file__).resolve()
-    while project_root.name != "progetto-ium":
-        project_root = project_root.parent
+    project_root = get_project_root()
 
     origin = project_root / "Risorse" / "R-Friendly Study Data"
     output_dir = project_root / "src" / "data"

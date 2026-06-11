@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 import numpy as np
 import pandas as pd
@@ -6,7 +5,7 @@ from pandas import DataFrame
 import scipy as sp
 from scipy import stats as st
 
-from src.utility.utility import SESSIONS
+from src.utility.utility import SESSIONS, get_project_root, generate_csv
 
 ############################################################
 # TODO
@@ -14,67 +13,69 @@ from src.utility.utility import SESSIONS
 ############################################################
 
 def main():
-    path_origin = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\soggetti_in_range'
-    path_target = r'C:\\DEV\\MATLAB\\progetto-ium\\src\\data\\full_set'
+    
+    project_root = get_project_root()
+    
+    path_origin = project_root / "src" / "data" / "soggetti_in_range"
+    
+    path_target = project_root / "src" / "data" / "full_set"
     
     stress_sessions = [5, 6, 7]
     lista_stress = []
     lista_no_stress = []
     
-    with os.scandir(path_origin) as subdirs:
-        for dir_soggetto in subdirs:
+    for dir_soggetto in path_origin.iterdir():
             id_soggetto = int(dir_soggetto.name[1:])
 
-            with os.scandir(dir_soggetto) as sessioni:
-                for sessione in sessioni:
-                    session_id = (Path(sessione.name)).stem.split("_")[1]
-                    inv = {v: k for k, v in SESSIONS.items()}
+            for sessione in dir_soggetto.iterdir():
+                session_id = (Path(sessione.name)).stem.split("_")[1]
+                inv = {v: k for k, v in SESSIONS.items()}
+                
+                session_id = inv[session_id]  
+                stress = (session_id in stress_sessions) # True = stress, Flase = no_stress
+                # lettura sessione
+                df = pd.read_csv(sessione)
+                
+                # estrazione segnali
+                segnale_peda = df[["Time", "Palm.EDA"]]
+                segnale_hr = df[["Time", "Heart.Rate"]]
+                segnale_br = df[["Time", "Breathing.Rate"]]
+                segnale_pereda = df[["Time", "Perinasal.Perspiration"]]
+                
+                segnali = {
+                    "Palm.EDA": segnale_peda,
+                    "Heart.Rate": segnale_hr,
+                    "Breathing.Rate": segnale_br,
+                    "Perinasal.Perspiration": segnale_pereda
+                }
+                
+                # estrazione feature su segmenti
+                for tipo_segnale, dati_segnale in segnali.items():
+                    finestra = 60
+                    step = 30 # overlap 50%
                     
-                    session_id = inv[session_id]  
-                    stress = (session_id in stress_sessions) # True = stress, Flase = no_stress
-                    # lettura sessione
-                    df = pd.read_csv(sessione)
+                    t_inizio = df["Time"].min()
+                    t_fine = df["Time"].max()
                     
-                    # estrazione segnali
-                    segnale_peda = df[["Time", "Palm.EDA"]]
-                    segnale_hr = df[["Time", "Heart.Rate"]]
-                    segnale_br = df[["Time", "Breathing.Rate"]]
-                    segnale_pereda = df[["Time", "Perinasal.Perspiration"]]
-                    
-                    segnali = {
-                        "Palm.EDA": segnale_peda,
-                        "Heart.Rate": segnale_hr,
-                        "Breathing.Rate": segnale_br,
-                        "Perinasal.Perspiration": segnale_pereda
-                    }
-                    
-                    # estrazione feature su segmenti
-                    for tipo_segnale, dati_segnale in segnali.items():
-                        finestra = 60
-                        step = 30 # overlap 50%
+                    t_corrente = t_inizio
+                    t_fine_segmento = t_inizio
+                    while(t_fine_segmento < t_fine):
+                        # estraggo segmento
+                        t_fine_segmento = min(t_corrente + finestra, t_fine) 
+                        segmento = dati_segnale[(dati_segnale["Time"] >= t_corrente) & (dati_segnale["Time"] < t_fine_segmento)]
                         
-                        t_inizio = df["Time"].min()
-                        t_fine = df["Time"].max()
                         
-                        t_corrente = t_inizio
-                        t_fine_segmento = t_inizio
-                        while(t_fine_segmento < t_fine):
-                            # estraggo segmento
-                            t_fine_segmento = min(t_corrente + finestra, t_fine) 
-                            segmento = dati_segnale[(dati_segnale["Time"] >= t_corrente) & (dati_segnale["Time"] < t_fine_segmento)]
-                            
-                            
-                            # calcolo features
-                            features = extract_features(segmento)
-                            
-                            # salvare features segmento
-                            if stress:
-                                lista_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
-                            else:
-                                lista_no_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
-                            
-                            # passo a segmento successivo
-                            t_corrente += step
+                        # calcolo features
+                        features = extract_features(segmento)
+                        
+                        # salvare features segmento
+                        if stress:
+                            lista_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
+                        else:
+                            lista_no_stress.append((id_soggetto, t_corrente, session_id, tipo_segnale, features))
+                        
+                        # passo a segmento successivo
+                        t_corrente += step
                             
                             
     # creazione lista unica
@@ -101,9 +102,11 @@ def main():
         })
 
     df = pd.DataFrame(lista_completa)
-    output = Path(path_target)
-    output.mkdir(parents=True, exist_ok=True)
-    df.to_csv(output / "full_set.csv", index=False)   
+    
+    generate_csv(df, path_target, "full_set")
+    # output = Path(path_target)
+    # output.mkdir(parents=True, exist_ok=True)
+    # df.to_csv(output / "full_set.csv", index=False)   
     
           
 # funzione di estrazione feature da un segmento
